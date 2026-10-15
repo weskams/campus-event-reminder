@@ -1,0 +1,79 @@
+/*
+ * Placeholder styles so the pages are usable until the real frontend
+ * design lands. Class names used by the templates:
+ *   layout: .site-header .brand .site-nav .container .site-footer .skip-link
+ *   content: .page-intro .event-grid .event-card .event-details .event-meta
+ *            .event-category .event-title .event-summary .event-attendees
+ *            .reminder-list .reminder .dashboard-section .organiser-panel
+ *   forms: .form .field .field-row .event-filters .auth-card .confirm-card
+ *   feedback: .alert(-success|-error|-info|-warning) .status(-active|-ended|-cancelled)
+ *             .empty-state .badge
+ *   buttons: button .button .button-secondary .button-danger
+ */
+
+body {
+    font-family: system-ui, sans-serif;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.site-nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    list-style: none;
+    padding: 0;
+}
+
+.logout-form {
+    display: inline;
+}
+
+.alert {
+    padding: 8px 12px;
+    border: 1px solid;
+    margin: 12px 0;
+}
+
+.alert-success { color: #14532d; background: #dcfce7; }
+.alert-error   { color: #7f1d1d; background: #fee2e2; }
+.alert-info    { color: #1e3a8a; background: #dbeafe; }
+.alert-warning { color: #78350f; background: #fef3c7; }
+
+.event-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.event-card {
+    border: 1px solid #ddd;
+    padding: 12px;
+}
+
+.field {
+    margin-bottom: 12px;
+}
+
+.field label {
+    display: block;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+.visually-hidden,
+.skip-link:not(:focus) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}

@@ -1,86 +1,39 @@
-
 <?php
-require_once "database.php";
+require __DIR__ . '/includes/bootstrap.php';
 
-// Find active events taking place in the next 24 hours.
-$sql = "SELECT id, title, description, event_date,
-               event_time, venue, category
-        FROM events
-        WHERE status = 'active'
-          AND TIMESTAMP(event_date, event_time) >= NOW()
-          AND TIMESTAMP(event_date, event_time)
-              <= DATE_ADD(NOW(), INTERVAL 24 HOUR)
-        ORDER BY event_date ASC, event_time ASC";
+$filters = ['within_hours' => 24];
 
-$stmt = $pdo->query($sql);
-$events = $stmt->fetchAll();
+$pagination = paginate(count_upcoming_events($filters), current_page(), EVENTS_PER_PAGE);
+$events = find_upcoming_events(
+    $filters,
+    EVENTS_PER_PAGE,
+    $pagination['offset'],
+    current_student_id()
+);
 
-function escapeHtml($value)
-{
-    return htmlspecialchars(
-        (string) $value,
-        ENT_QUOTES,
-        "UTF-8"
-    );
-}
+$pageTitle = 'Happening in the next 24 hours';
+require __DIR__ . '/partials/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Events Happening Soon</title>
-</head>
-<body>
+<section class="page-intro">
+    <h1>Happening in the next 24 hours</h1>
+    <p><a href="index.php">See all upcoming events</a></p>
+</section>
 
-    <h1>Events Happening Soon</h1>
+<?php if (!$events): ?>
+    <p class="empty-state">No events are happening in the next 24 hours.</p>
+<?php else: ?>
+    <h2 class="result-count">
+        <?= $pagination['total'] ?> event<?= $pagination['total'] === 1 ? '' : 's' ?> coming up
+    </h2>
 
-    <p>These are events taking place within the next 24 hours.</p>
-
-    <p>
-        <a href="index.php">All Upcoming Events</a>
-    </p>
-
-    <?php if (count($events) === 0): ?>
-
-        <p>No events are happening in the next 24 hours.</p>
-
-    <?php else: ?>
-
+    <div class="event-grid">
         <?php foreach ($events as $event): ?>
-
-            <div>
-                <h2><?= escapeHtml($event["title"]) ?></h2>
-
-                <p>
-                    Date: <?= escapeHtml($event["event_date"]) ?>
-                </p>
-
-                <p>
-                    Time: <?= escapeHtml($event["event_time"]) ?>
-                </p>
-
-                <p>
-                    Venue: <?= escapeHtml($event["venue"]) ?>
-                </p>
-
-                <p>
-                    Category: <?= escapeHtml($event["category"]) ?>
-                </p>
-
-                <p>
-                    <a href="event-details.php?id=<?= (int) $event["id"] ?>">
-                        View Event Details
-                    </a>
-                </p>
-            </div>
-
-            <hr>
-
+            <?php require __DIR__ . '/partials/event-card.php'; ?>
         <?php endforeach; ?>
+    </div>
 
-    <?php endif; ?>
+    <?php require __DIR__ . '/partials/pagination.php'; ?>
+<?php endif; ?>
 
-</body>
-</html>
+<?php require __DIR__ . '/partials/footer.php'; ?>

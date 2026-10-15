@@ -1,74 +1,58 @@
 <?php
-session_start();
-require_once "database.php";
+require __DIR__ . '/includes/bootstrap.php';
 
-$error = "";
+if (current_student_id() !== null) {
+    redirect('student-dashboard.php');
+}
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $email = filter_var(
-        trim($_POST["email"] ?? ""),
-        FILTER_VALIDATE_EMAIL
-    );
-    $password = $_POST["password"] ?? "";
+$email = '';
+$error = '';
 
-    if ($email && is_string($password)) {
-        $stmt = $pdo->prepare(
-            "SELECT id, full_name, email, password_hash
-             FROM students
-             WHERE email = :email"
-        );
+if (is_post()) {
+    require_valid_post();
 
-        $stmt->execute(["email" => $email]);
-        $student = $stmt->fetch();
+    $email = post_string('email');
+    $result = attempt_login('student', $email, post_raw('password'));
 
-        if (
-            $student &&
-            password_verify($password, $student["password_hash"])
-        ) {
-            session_regenerate_id(true);
-
-            // Keep student identity separate from organiser identity.
-            unset(
-                $_SESSION["organiser_id"],
-                $_SESSION["organiser_name"]
-            );
-
-            $_SESSION["student_id"] = $student["id"];
-            $_SESSION["student_name"] = $student["full_name"];
-
-            header("Location: student-dashboard.php");
-            exit;
-        }
+    if (is_array($result)) {
+        login_user('student', $result['id'], $result['name']);
+        flash('success', 'Welcome back, ' . $result['name'] . '.');
+        redirect('student-dashboard.php');
     }
 
-    $error = "Invalid email or password.";
+    $error = $result;
 }
+
+$pageTitle = 'Student login';
+require __DIR__ . '/partials/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Login</title>
-</head>
-<body>
-    <h1>Student Login</h1>
+<section class="auth-card">
+    <h1>Student login</h1>
 
-    <?php if ($error !== ""): ?>
-        <p><?= htmlspecialchars($error, ENT_QUOTES, "UTF-8") ?></p>
+    <?php if ($error !== ''): ?>
+        <div class="alert alert-error" role="alert"><?= e($error) ?></div>
     <?php endif; ?>
 
-    <form method="POST">
-        <label>Email Address</label>
-        <input type="email" name="email" required>
+    <form class="form" method="post" action="student-login.php">
+        <?= csrf_field() ?>
 
-        <label>Password</label>
-        <input type="password" name="password" required>
+        <div class="field">
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" required
+                   autocomplete="email" value="<?= e($email) ?>">
+        </div>
 
-        <button type="submit">Log In</button>
+        <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required
+                   autocomplete="current-password">
+        </div>
+
+        <button type="submit">Log in</button>
     </form>
 
-    <p><a href="student-register.php">Create a student account</a></p>
-</body>
-</html>
+    <p>New here? <a href="student-register.php">Create a student account</a>.</p>
+</section>
+
+<?php require __DIR__ . '/partials/footer.php'; ?>

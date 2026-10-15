@@ -1,91 +1,118 @@
 <?php
-session_start();
-require_once "database.php";
+require __DIR__ . '/includes/bootstrap.php';
 
-$message = "";
+if (current_student_id() !== null) {
+    redirect('student-dashboard.php');
+}
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $fullName = trim($_POST["full_name"] ?? "");
-    $regNumber = trim($_POST["registration_number"] ?? "");
-    $email = filter_var(
-        trim($_POST["email"] ?? ""),
-        FILTER_VALIDATE_EMAIL
-    );
-    $password = $_POST["password"] ?? "";
-    $confirmPassword = $_POST["confirm_password"] ?? "";
+$form = ['full_name' => '', 'registration_number' => '', 'email' => ''];
+$errors = [];
 
-    if (
-        $fullName === "" ||
-        $regNumber === "" ||
-        !$email ||
-        !is_string($password) ||
-        strlen($password) < 10
-    ) {
-        $message = "Enter all details and use a password of at least 10 characters.";
-    } elseif ($password !== $confirmPassword) {
-        $message = "The passwords do not match.";
-    } else {
+if (is_post()) {
+    require_valid_post();
+
+    $form = [
+        'full_name' => post_string('full_name'),
+        'registration_number' => mb_strtoupper(post_string('registration_number')),
+        'email' => post_string('email'),
+    ];
+    $email = normalise_email($form['email']);
+    $password = post_raw('password');
+
+    if ($form['full_name'] === '' || mb_strlen($form['full_name']) > 100) {
+        $errors[] = 'Enter your full name (up to 100 characters).';
+    }
+
+    if (!preg_match('~^[A-Z0-9/-]{3,30}$~', $form['registration_number'])) {
+        $errors[] = 'Enter a valid registration number (letters, numbers, "/" and "-" only).';
+    }
+
+    if ($email === null) {
+        $errors[] = 'Enter a valid email address.';
+    }
+
+    $passwordError = validate_password($password, post_raw('confirm_password'));
+
+    if ($passwordError !== null) {
+        $errors[] = $passwordError;
+    }
+
+    if (!$errors) {
         try {
-            $hash = password_hash($password, PASSWORD_DEFAULT);
-
-            $stmt = $pdo->prepare(
-                "INSERT INTO students
-                    (full_name, registration_number, email, password_hash)
-                 VALUES
-                    (:full_name, :reg_number, :email, :password_hash)"
+            $studentId = create_student(
+                $form['full_name'],
+                $form['registration_number'],
+                $email,
+                $password
             );
 
-            $stmt->execute([
-                "full_name" => $fullName,
-                "reg_number" => $regNumber,
-                "email" => $email,
-                "password_hash" => $hash
-            ]);
-
-            $message = "Registration successful! You can now log in.";
+            login_user('student', $studentId, $form['full_name']);
+            flash('success', 'Your account is ready. Find an event to register for!');
+            redirect('index.php');
         } catch (PDOException $e) {
-            if ($e->getCode() === "23000") {
-                $message = "That email or registration number is already registered.";
-            } else {
-                error_log($e->getMessage());
-                $message = "Registration failed. Please try again.";
+            if (!is_duplicate_key($e)) {
+                throw $e;
             }
+
+            $errors[] = 'An account with that email or registration number already exists.';
         }
     }
 }
+
+$pageTitle = 'Create a student account';
+require __DIR__ . '/partials/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Registration</title>
-</head>
-<body>
-    <h1>Create Student Account</h1>
+<section class="auth-card">
+    <h1>Create a student account</h1>
 
-    <p><?= htmlspecialchars($message, ENT_QUOTES, "UTF-8") ?></p>
+    <?php if ($errors): ?>
+        <div class="alert alert-error" role="alert">
+            <ul>
+                <?php foreach ($errors as $error): ?>
+                    <li><?= e($error) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
 
-    <form method="POST">
-        <label>Full Name</label>
-        <input type="text" name="full_name" required>
+    <form class="form" method="post" action="student-register.php">
+        <?= csrf_field() ?>
 
-        <label>Registration Number</label>
-        <input type="text" name="registration_number" required>
+        <div class="field">
+            <label for="full_name">Full name</label>
+            <input type="text" id="full_name" name="full_name" maxlength="100" required
+                   autocomplete="name" value="<?= e($form['full_name']) ?>">
+        </div>
 
-        <label>Email Address</label>
-        <input type="email" name="email" required>
+        <div class="field">
+            <label for="registration_number">Registration number</label>
+            <input type="text" id="registration_number" name="registration_number"
+                   maxlength="30" required value="<?= e($form['registration_number']) ?>">
+        </div>
 
-        <label>Password (minimum 10 characters)</label>
-        <input type="password" name="password" minlength="10" required>
+        <div class="field">
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" required
+                   autocomplete="email" value="<?= e($form['email']) ?>">
+        </div>
 
-        <label>Confirm Password</label>
-        <input type="password" name="confirm_password" minlength="10" required>
+        <div class="field">
+            <label for="password">Password <span class="hint">(at least <?= PASSWORD_MIN_LENGTH ?> characters)</span></label>
+            <input type="password" id="password" name="password" required
+                   minlength="<?= PASSWORD_MIN_LENGTH ?>" autocomplete="new-password">
+        </div>
 
-        <button type="submit">Register</button>
+        <div class="field">
+            <label for="confirm_password">Confirm password</label>
+            <input type="password" id="confirm_password" name="confirm_password" required
+                   minlength="<?= PASSWORD_MIN_LENGTH ?>" autocomplete="new-password">
+        </div>
+
+        <button type="submit">Create account</button>
     </form>
 
-    <p><a href="student-login.php">Already registered? Log in</a></p>
-</body>
-</html>
+    <p>Already registered? <a href="student-login.php">Log in</a>.</p>
+</section>
+
+<?php require __DIR__ . '/partials/footer.php'; ?>

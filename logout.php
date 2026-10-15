@@ -1,23 +1,14 @@
 <?php
-session_start();
+// Logs out students and organisers. POST-only so other sites can't log
+// people out with a link or image.
+require __DIR__ . '/includes/bootstrap.php';
 
-$_SESSION = [];
-
-if (ini_get("session.use_cookies")) {
-    $params = session_get_cookie_params();
-
-    setcookie(
-        session_name(),
-        "",
-        time() - 42000,
-        $params["path"],
-        $params["domain"],
-        $params["secure"],
-        $params["httponly"]
-    );
+if (!is_post() || current_user() === null) {
+    redirect('index.php');
 }
 
-session_destroy();
+require_valid_post();
 
-header("Location: login.php");
-exit;
+logout_user();
+flash('success', 'You have been logged out.');
+redirect('index.php');

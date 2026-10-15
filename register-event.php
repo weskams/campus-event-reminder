@@ -1,121 +1,23 @@
 <?php
-require_once "student-auth.php";
-require_once "database.php";
+require __DIR__ . '/includes/bootstrap.php';
 
-// Accept POST requests only.
-if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    header("Location: student-dashboard.php");
-    exit;
+$studentId = require_student();
+require_valid_post();
+
+$returnTo = safe_return_path(post_string('return_to'), 'student-dashboard.php');
+$eventId = post_id('event_id');
+
+if ($eventId === null) {
+    flash('error', 'That event could not be found.');
+    redirect($returnTo);
 }
 
-// Verify CSRF token.
-$submittedToken = $_POST["csrf_token"] ?? "";
-$sessionToken = $_SESSION["csrf_token"] ?? "";
+$result = register_student_for_event($studentId, $eventId);
 
-if (
-    !is_string($submittedToken) ||
-    !is_string($sessionToken) ||
-    $sessionToken === "" ||
-    !hash_equals($sessionToken, $submittedToken)
-) {
-    http_response_code(403);
-    exit("Invalid security token. Please return to your dashboard and try again.");
-}
+match ($result) {
+    'registered' => flash('success', "You're registered! We'll remind you an hour before it starts."),
+    'already_registered' => flash('info', "You're already registered for this event."),
+    'unavailable' => flash('error', 'This event is no longer open for registration.'),
+};
 
-// Validate event ID.
-$eventId = filter_input(
-    INPUT_POST,
-    "event_id",
-    FILTER_VALIDATE_INT,
-    ["options" => ["min_range" => 1]]
-);
-
-if (!$eventId) {
-    header("Location: student-dashboard.php?error=invalid_event");
-    exit;
-}
-
-$studentId = (int) $_SESSION["student_id"];
-
-try {
-    // Confirm the event exists and is still upcoming.
-    $stmt = $pdo->prepare(
-        "SELECT id
-         FROM events
-         WHERE id = :event_id
-           AND status = 'active'
-           AND TIMESTAMP(event_date, event_time) > NOW()
-         LIMIT 1"
-    );
-
-    $stmt->execute(["event_id" => $eventId]);
-
-    if (!$stmt->fetch()) {
-        header("Location: student-dashboard.php?error=event_unavailable");
-        exit;
-    }
-
-    // Save the registration and reminder together.
-    $pdo->beginTransaction();
-
-    $stmt = $pdo->prepare(
-        "INSERT INTO event_registrations (student_id, event_id)
-         VALUES (:student_id, :event_id)"
-    );
-
-    $stmt->execute([
-        "student_id" => $studentId,
-        "event_id" => $eventId
-    ]);
-
-    // Automatically create the student's reminder.
-    // If the event starts within one hour, make the reminder due now.
-    $stmt = $pdo->prepare(
-        "INSERT INTO reminders
-            (recipient_id, event_id, reminder_type, scheduled_for)
-         SELECT
-            :student_id,
-            id,
-            'one_hour_before',
-            GREATEST(
-                NOW(),
-                DATE_SUB(
-                    TIMESTAMP(event_date, event_time),
-                    INTERVAL 1 HOUR
-                )
-            )
-         FROM events
-         WHERE id = :event_id
-           AND status = 'active'"
-    );
-
-    $stmt->execute([
-        "student_id" => $studentId,
-        "event_id" => $eventId
-    ]);
-
-    $pdo->commit();
-
-    // Return to the dashboard.
-    header("Location: student-dashboard.php?registered=1");
-    exit;
-
-} catch (PDOException $e) {
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
-    }
-
-    // MySQL duplicate-key error.
-    if (
-        $e->getCode() === "23000" &&
-        isset($e->errorInfo[1]) &&
-        (int) $e->errorInfo[1] === 1062
-    ) {
-        header("Location: student-dashboard.php?error=already_registered");
-        exit;
-    }
-
-    error_log($e->getMessage());
-    http_response_code(500);
-    exit("Registration failed. Please try again later.");
-}
+redirect($returnTo);

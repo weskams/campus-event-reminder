@@ -1,0 +1,5 @@
+Options -Indexes
+
+# Never serve git metadata, dotfiles or internal folders.
+RedirectMatch 404 /\.
+RedirectMatch 404 /(config|includes|partials|database)(/|$)

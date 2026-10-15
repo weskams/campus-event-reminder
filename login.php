@@ -1,65 +1,59 @@
 <?php
-session_start();
-require_once "database.php";
+// Organiser login.
+require __DIR__ . '/includes/bootstrap.php';
 
-$error = "";
+if (current_organiser_id() !== null) {
+    redirect('organiser-dashboard.php');
+}
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $email = filter_var(
-        trim($_POST["email"] ?? ""),
-        FILTER_VALIDATE_EMAIL
-    );
-    $password = $_POST["password"] ?? "";
+$email = '';
+$error = '';
 
-    if ($email && is_string($password)) {
-        $stmt = $pdo->prepare(
-            "SELECT id, name, email, password_hash
-             FROM organisers
-             WHERE email = :email"
-        );
+if (is_post()) {
+    require_valid_post();
 
-        $stmt->execute(["email" => $email]);
-        $organiser = $stmt->fetch();
+    $email = post_string('email');
+    $result = attempt_login('organiser', $email, post_raw('password'));
 
-        if (
-            $organiser &&
-            password_verify($password, $organiser["password_hash"])
-        ) {
-            session_regenerate_id(true);
-
-            $_SESSION["organiser_id"] = $organiser["id"];
-            $_SESSION["organiser_name"] = $organiser["name"];
-
-            header("Location: index.php");
-            exit;
-        }
+    if (is_array($result)) {
+        login_user('organiser', $result['id'], $result['name']);
+        flash('success', 'Welcome back, ' . $result['name'] . '.');
+        redirect('organiser-dashboard.php');
     }
 
-    $error = "Invalid email or password.";
+    $error = $result;
 }
+
+$pageTitle = 'Organiser login';
+require __DIR__ . '/partials/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Organiser Login</title>
-</head>
-<body>
-    <h1>Organiser Login</h1>
+<section class="auth-card">
+    <h1>Organiser login</h1>
 
-    <?php if ($error !== ""): ?>
-        <p><?= htmlspecialchars($error, ENT_QUOTES, "UTF-8") ?></p>
+    <?php if ($error !== ''): ?>
+        <div class="alert alert-error" role="alert"><?= e($error) ?></div>
     <?php endif; ?>
 
-    <form method="POST">
-        <input type="email" name="email"
-               placeholder="Email address" required>
+    <form class="form" method="post" action="login.php">
+        <?= csrf_field() ?>
 
-        <input type="password" name="password"
-               placeholder="Password" required>
+        <div class="field">
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" required
+                   autocomplete="email" value="<?= e($email) ?>">
+        </div>
 
-        <button type="submit">Log In</button>
+        <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required
+                   autocomplete="current-password">
+        </div>
+
+        <button type="submit">Log in</button>
     </form>
-</body>
-</html>
+
+    <p>Are you a student? <a href="student-login.php">Log in here</a>.</p>
+</section>
+
+<?php require __DIR__ . '/partials/footer.php'; ?>
