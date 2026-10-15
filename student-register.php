@@ -60,59 +60,75 @@ if (is_post()) {
 }
 
 $pageTitle = 'Create a student account';
+$asideTitle = 'Join campus life in thirty seconds.';
 require __DIR__ . '/partials/header.php';
 ?>
 
-<section class="auth-card">
-    <h1>Create a student account</h1>
+<div class="auth-layout">
+    <?php require __DIR__ . '/partials/auth-aside.php'; ?>
 
-    <?php if ($errors): ?>
-        <div class="alert alert-error" role="alert">
-            <ul>
-                <?php foreach ($errors as $error): ?>
-                    <li><?= e($error) ?></li>
-                <?php endforeach; ?>
-            </ul>
+    <section class="auth-panel">
+        <div class="auth-card">
+            <p class="eyebrow">Students</p>
+            <h1 class="display-sm">Create your account</h1>
+            <p class="muted">Free for every Kabarak student.</p>
+
+            <?php if ($errors): ?>
+                <div class="alert alert-error" role="alert">
+                    <?= icon('alert', 'alert-icon') ?>
+                    <ul>
+                        <?php foreach ($errors as $error): ?>
+                            <li><?= e($error) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
+
+            <form class="form" method="post" action="student-register.php" data-submit-once>
+                <?= csrf_field() ?>
+
+                <div class="field">
+                    <label for="full_name">Full name</label>
+                    <input type="text" id="full_name" name="full_name" maxlength="100" required
+                           autocomplete="name" placeholder="Jane Wanjiru" value="<?= e($form['full_name']) ?>">
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label for="registration_number">Registration no.</label>
+                        <input type="text" id="registration_number" name="registration_number"
+                               maxlength="30" required placeholder="BIT/0001/22"
+                               value="<?= e($form['registration_number']) ?>">
+                    </div>
+
+                    <div class="field">
+                        <label for="email">Email address</label>
+                        <input type="email" id="email" name="email" required
+                               autocomplete="email" placeholder="you@students.kabarak.ac.ke" value="<?= e($form['email']) ?>">
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required
+                               minlength="<?= PASSWORD_MIN_LENGTH ?>" autocomplete="new-password">
+                        <p class="hint">At least <?= PASSWORD_MIN_LENGTH ?> characters</p>
+                    </div>
+
+                    <div class="field">
+                        <label for="confirm_password">Confirm password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" required
+                               minlength="<?= PASSWORD_MIN_LENGTH ?>" autocomplete="new-password">
+                    </div>
+                </div>
+
+                <button type="submit" class="button button-lg button-block">Create account <?= icon('arrow-right') ?></button>
+            </form>
+
+            <p class="auth-switch">Already registered? <a href="student-login.php">Log in</a></p>
         </div>
-    <?php endif; ?>
-
-    <form class="form" method="post" action="student-register.php">
-        <?= csrf_field() ?>
-
-        <div class="field">
-            <label for="full_name">Full name</label>
-            <input type="text" id="full_name" name="full_name" maxlength="100" required
-                   autocomplete="name" value="<?= e($form['full_name']) ?>">
-        </div>
-
-        <div class="field">
-            <label for="registration_number">Registration number</label>
-            <input type="text" id="registration_number" name="registration_number"
-                   maxlength="30" required value="<?= e($form['registration_number']) ?>">
-        </div>
-
-        <div class="field">
-            <label for="email">Email address</label>
-            <input type="email" id="email" name="email" required
-                   autocomplete="email" value="<?= e($form['email']) ?>">
-        </div>
-
-        <div class="field">
-            <label for="password">Password <span class="hint">(at least <?= PASSWORD_MIN_LENGTH ?> characters)</span></label>
-            <input type="password" id="password" name="password" required
-                   minlength="<?= PASSWORD_MIN_LENGTH ?>" autocomplete="new-password">
-        </div>
-
-        <div class="field">
-            <label for="confirm_password">Confirm password</label>
-            <input type="password" id="confirm_password" name="confirm_password" required
-                   minlength="<?= PASSWORD_MIN_LENGTH ?>" autocomplete="new-password">
-        </div>
-
-        <button type="submit">Create account</button>
-    </form>
-
-    <p>Already registered? <a href="student-login.php">Log in</a>.</p>
-</section>
+    </section>
+</div>
 
 <?php require __DIR__ . '/partials/footer.php'; ?>

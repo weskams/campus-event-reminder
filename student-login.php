@@ -27,32 +27,40 @@ $pageTitle = 'Student login';
 require __DIR__ . '/partials/header.php';
 ?>
 
-<section class="auth-card">
-    <h1>Student login</h1>
+<div class="auth-layout">
+    <?php require __DIR__ . '/partials/auth-aside.php'; ?>
 
-    <?php if ($error !== ''): ?>
-        <div class="alert alert-error" role="alert"><?= e($error) ?></div>
-    <?php endif; ?>
+    <section class="auth-panel">
+        <div class="auth-card">
+            <p class="eyebrow">Students</p>
+            <h1 class="display-sm">Welcome back</h1>
+            <p class="muted">Log in to see your reminders and registered events.</p>
 
-    <form class="form" method="post" action="student-login.php">
-        <?= csrf_field() ?>
+            <?php if ($error !== ''): ?>
+                <div class="alert alert-error" role="alert"><?= icon('alert', 'alert-icon') ?><p><?= e($error) ?></p></div>
+            <?php endif; ?>
 
-        <div class="field">
-            <label for="email">Email address</label>
-            <input type="email" id="email" name="email" required
-                   autocomplete="email" value="<?= e($email) ?>">
+            <form class="form" method="post" action="student-login.php" data-submit-once>
+                <?= csrf_field() ?>
+
+                <div class="field">
+                    <label for="email">Email address</label>
+                    <input type="email" id="email" name="email" required autofocus
+                           autocomplete="email" placeholder="you@students.kabarak.ac.ke" value="<?= e($email) ?>">
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required
+                           autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="button button-lg button-block">Log in <?= icon('arrow-right') ?></button>
+            </form>
+
+            <p class="auth-switch">New here? <a href="student-register.php">Create a student account</a></p>
         </div>
-
-        <div class="field">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" required
-                   autocomplete="current-password">
-        </div>
-
-        <button type="submit">Log in</button>
-    </form>
-
-    <p>New here? <a href="student-register.php">Create a student account</a>.</p>
-</section>
+    </section>
+</div>
 
 <?php require __DIR__ . '/partials/footer.php'; ?>

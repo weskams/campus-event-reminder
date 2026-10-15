@@ -36,13 +36,23 @@ $pageTitle = 'Edit ' . $event['title'];
 require __DIR__ . '/partials/header.php';
 ?>
 
-<p><a href="event-details.php?id=<?= (int) $id ?>">← Back to event</a></p>
-<h1>Edit event</h1>
+<section class="page-hero page-hero-compact">
+    <div class="container">
+        <a class="back-link" href="event-details.php?id=<?= (int) $id ?>"><?= icon('arrow-left') ?> Back to event</a>
+        <h1 class="display-sm">Edit <em><?= e($event['title']) ?></em></h1>
+        <p class="lead">
+            <?= (int) $event['attendee_count'] ?> registered.
+            Changing the time automatically reschedules their reminders.
+        </p>
+    </div>
+</section>
 
-<?php
-$formAction = 'edit-event.php?id=' . $id;
-$submitLabel = 'Save changes';
-require __DIR__ . '/partials/event-form.php';
-?>
+<div class="container section">
+    <?php
+    $formAction = 'edit-event.php?id=' . $id;
+    $submitLabel = 'Save changes';
+    require __DIR__ . '/partials/event-form.php';
+    ?>
+</div>
 
 <?php require __DIR__ . '/partials/footer.php'; ?>

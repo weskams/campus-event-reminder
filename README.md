@@ -61,6 +61,19 @@ require __DIR__ . '/partials/header.php';
 require __DIR__ . '/partials/footer.php';
 ```
 
+## Frontend
+
+- **Design system:** `assets/css/style.css` holds all colours, type, spacing and
+  shadows as CSS variables at the top, with automatic dark mode. Each event
+  category has its own gradient palette (`.cat-academic`, `.cat-sports`, …).
+  To add a category, add it to `EVENT_CATEGORIES` and give it a `.cat-*` rule.
+- **Type:** Fraunces for headlines, Inter for body text (Google Fonts).
+- **Icons:** inline SVGs via `icon('name')` in `includes/helpers.php`.
+- **JavaScript:** `assets/js/app.js` adds the mobile menu, live countdowns,
+  auto-dismissing toasts and double-submit protection. Every page still works
+  without it.
+- **Layout:** pages wrap content in `.container`, so heroes can run full-width.
+
 ## Security notes
 
 - All SQL uses prepared statements, and all output is escaped with `e()`.

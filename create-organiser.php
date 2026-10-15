@@ -60,55 +60,70 @@ if (is_post()) {
 }
 
 $pageTitle = 'Create organiser account';
+$asideTitle = $isFirstSetup ? "Let's get your campus started." : 'Grow your organising team.';
+$asideText = 'Organisers can publish events, see who has registered and keep everyone informed.';
 require __DIR__ . '/partials/header.php';
 ?>
 
-<section class="auth-card">
-    <h1><?= $isFirstSetup ? 'Set up the first organiser' : 'Add an organiser' ?></h1>
+<div class="auth-layout">
+    <?php require __DIR__ . '/partials/auth-aside.php'; ?>
 
-    <?php if ($isFirstSetup): ?>
-        <p>No organiser accounts exist yet. The account you create here will be able to add others.</p>
-    <?php endif; ?>
+    <section class="auth-panel">
+        <div class="auth-card">
+            <p class="eyebrow"><?= $isFirstSetup ? 'First-time setup' : 'Organisers' ?></p>
+            <h1 class="display-sm"><?= $isFirstSetup ? 'Set up the first organiser' : 'Add an organiser' ?></h1>
 
-    <?php if ($errors): ?>
-        <div class="alert alert-error" role="alert">
-            <ul>
-                <?php foreach ($errors as $error): ?>
-                    <li><?= e($error) ?></li>
-                <?php endforeach; ?>
-            </ul>
+            <?php if ($isFirstSetup): ?>
+                <p class="muted">No organiser accounts exist yet. The account you create here will be able to add others.</p>
+            <?php else: ?>
+                <p class="muted">They'll be able to publish and manage their own events.</p>
+            <?php endif; ?>
+
+            <?php if ($errors): ?>
+                <div class="alert alert-error" role="alert">
+                    <?= icon('alert', 'alert-icon') ?>
+                    <ul>
+                        <?php foreach ($errors as $error): ?>
+                            <li><?= e($error) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
+
+            <form class="form" method="post" action="create-organiser.php" data-submit-once>
+                <?= csrf_field() ?>
+
+                <div class="field">
+                    <label for="name">Full name</label>
+                    <input type="text" id="name" name="name" maxlength="100" required
+                           value="<?= e($form['name']) ?>">
+                </div>
+
+                <div class="field">
+                    <label for="email">Email address</label>
+                    <input type="email" id="email" name="email" required
+                           placeholder="name@kabarak.ac.ke" value="<?= e($form['email']) ?>">
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required
+                               minlength="<?= PASSWORD_MIN_LENGTH ?>" autocomplete="new-password">
+                        <p class="hint">At least <?= PASSWORD_MIN_LENGTH ?> characters</p>
+                    </div>
+
+                    <div class="field">
+                        <label for="confirm_password">Confirm password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" required
+                               minlength="<?= PASSWORD_MIN_LENGTH ?>" autocomplete="new-password">
+                    </div>
+                </div>
+
+                <button type="submit" class="button button-lg button-block">Create account <?= icon('arrow-right') ?></button>
+            </form>
         </div>
-    <?php endif; ?>
-
-    <form class="form" method="post" action="create-organiser.php">
-        <?= csrf_field() ?>
-
-        <div class="field">
-            <label for="name">Full name</label>
-            <input type="text" id="name" name="name" maxlength="100" required
-                   value="<?= e($form['name']) ?>">
-        </div>
-
-        <div class="field">
-            <label for="email">Email address</label>
-            <input type="email" id="email" name="email" required
-                   value="<?= e($form['email']) ?>">
-        </div>
-
-        <div class="field">
-            <label for="password">Password <span class="hint">(at least <?= PASSWORD_MIN_LENGTH ?> characters)</span></label>
-            <input type="password" id="password" name="password" required
-                   minlength="<?= PASSWORD_MIN_LENGTH ?>" autocomplete="new-password">
-        </div>
-
-        <div class="field">
-            <label for="confirm_password">Confirm password</label>
-            <input type="password" id="confirm_password" name="confirm_password" required
-                   minlength="<?= PASSWORD_MIN_LENGTH ?>" autocomplete="new-password">
-        </div>
-
-        <button type="submit">Create account</button>
-    </form>
-</section>
+    </section>
+</div>
 
 <?php require __DIR__ . '/partials/footer.php'; ?>

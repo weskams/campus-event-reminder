@@ -19,17 +19,24 @@ if (is_post()) {
     }
 }
 
-$pageTitle = 'Add an event';
+$pageTitle = 'New event';
 require __DIR__ . '/partials/header.php';
 ?>
 
-<p><a href="organiser-dashboard.php">← Back to my events</a></p>
-<h1>Add a campus event</h1>
+<section class="page-hero page-hero-compact">
+    <div class="container">
+        <a class="back-link" href="organiser-dashboard.php"><?= icon('arrow-left') ?> My events</a>
+        <h1 class="display-sm">Create a <em>new event</em></h1>
+        <p class="lead">It goes live as soon as you publish.</p>
+    </div>
+</section>
 
-<?php
-$formAction = 'add-event.php';
-$submitLabel = 'Publish event';
-require __DIR__ . '/partials/event-form.php';
-?>
+<div class="container section">
+    <?php
+    $formAction = 'add-event.php';
+    $submitLabel = 'Publish event';
+    require __DIR__ . '/partials/event-form.php';
+    ?>
+</div>
 
 <?php require __DIR__ . '/partials/footer.php'; ?>
